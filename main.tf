@@ -38,10 +38,10 @@ data "aws_iam_policy_document" "permissions" {
 }
 resource "aws_iam_role" "lambda_execution_role" {
   assume_role_policy = "${data.aws_iam_policy_document.assume_role.json}"
-  name               = "${var.environment}-${var.app_name}-default-document-miss-lambda-execution-role"
+  name               = "${var.environment}-${var.app_name}-lambda-execution-role"
 }
 resource "aws_iam_role_policy" "lambda_execution_role" {
-  name   = "${var.environment}-${var.app_name}-default-document-miss-lambda-execution-role-policy"
+  name   = "${var.environment}-${var.app_name}-lambda-execution-role-policy"
   policy = "${data.aws_iam_policy_document.permissions.json}"
   role   = "${aws_iam_role.lambda_execution_role.id}"
 }
