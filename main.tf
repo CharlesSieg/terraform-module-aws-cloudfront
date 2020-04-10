@@ -54,13 +54,13 @@ data "archive_file" "lambda" {
   type        = "zip"
 }
 resource "aws_lambda_function" "lambda" {
-  filename         = "${data.archive_file.lambda.0.output_path}"
+  filename         = "${data.archive_file.lambda.output_path}"
   function_name    = "${var.environment}-${var.app_name}-defaultDocumentMiss"
   handler          = "index.handler"
   publish          = true
   role             = "${aws_iam_role.lambda_execution_role.arn}"
   runtime          = "nodejs10.x"
-  source_code_hash = "${data.archive_file.lambda.0.output_base64sha256}"
+  source_code_hash = "${data.archive_file.lambda.output_base64sha256}"
 }
 
 
