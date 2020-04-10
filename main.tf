@@ -1,3 +1,69 @@
+###########################################################
+###########################################################
+# CLIENT FILES CLOUDFRONT LAMBDA
+###########################################################
+###########################################################
+#
+# Create the IAM role and associated policies for executing the lambda function.
+#
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    effect  = "Allow"
+    principals {
+      identifiers = [
+        "edgelambda.amazonaws.com",
+        "lambda.amazonaws.com",
+      ]
+      type = "Service"
+    }
+  }
+}
+data "aws_iam_policy_document" "permissions" {
+  statement {
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:GetRandomPassword",
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:ListSecretVersionIds",
+    ]
+    effect    = "Allow"
+    resources = ["*"]
+    sid       = "DefaultDocumentMissLambdaPermissions"
+  }
+}
+resource "aws_iam_role" "lambda_execution_role" {
+  assume_role_policy = "${data.aws_iam_policy_document.assume_role.json}"
+  name               = "${var.environment}-default-document-miss-lambda-execution-role"
+}
+resource "aws_iam_role_policy" "lambda_execution_role" {
+  name   = "${var.environment}-default-document-miss-lambda-execution-role-policy"
+  policy = "${data.aws_iam_policy_document.permissions.json}"
+  role   = "${aws_iam_role.lambda_execution_role.id}"
+}
+#
+# Zip up the lambda source code and create the lambda function.
+#
+data "archive_file" "lambda" {
+  output_path = "${path.module}/.files/defaultDocumentMiss.zip"
+  source_file = "${path.module}/source/defaultDocumentMiss/index.js"
+  type        = "zip"
+}
+resource "aws_lambda_function" "lambda" {
+  filename         = "${data.archive_file.lambda.0.output_path}"
+  function_name    = "${var.environment}-${var.app_name}-defaultDocumentMiss"
+  handler          = "index.handler"
+  publish          = true
+  role             = "${aws_iam_role.lambda_execution_role.arn}"
+  runtime          = "nodejs10.x"
+  source_code_hash = "${data.archive_file.lambda.0.output_base64sha256}"
+}
+
+
 #
 # Look up the SSL certificate in AWS Certificate Manager for the provided domain.
 #
@@ -45,6 +111,12 @@ resource "aws_cloudfront_distribution" "cloudfront" {
       cookies {
         forward = "all"
       }
+
+      lambda_function_association {
+        event_type   = "viewer-request"
+        lambda_arn   = "${aws_lambda_function.lambda.qualified_arn}"
+        include_body = false
+      }
     }
   }
   # Only USA and Europe; least expensive option
@@ -60,7 +132,7 @@ resource "aws_cloudfront_distribution" "cloudfront" {
     Name        = "${var.environment}-${var.app_name}-cloudfront"
     Application = "${var.environment}-${var.app_name}"
     Billing     = "${var.environment}-${var.app_name}"
-    Environment = "${var.environment}"
+    Environment = var.environment
     Terraform   = "true"
   }
   viewer_certificate {
