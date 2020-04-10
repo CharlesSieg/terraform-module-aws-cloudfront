@@ -111,12 +111,12 @@ resource "aws_cloudfront_distribution" "cloudfront" {
       cookies {
         forward = "all"
       }
+    }
 
-      lambda_function_association {
-        event_type   = "viewer-request"
-        lambda_arn   = "${aws_lambda_function.lambda.qualified_arn}"
-        include_body = false
-      }
+    lambda_function_association {
+      event_type   = "viewer-request"
+      lambda_arn   = "${aws_lambda_function.lambda.qualified_arn}"
+      include_body = false
     }
   }
   # Only USA and Europe; least expensive option
