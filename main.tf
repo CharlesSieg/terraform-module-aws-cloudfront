@@ -37,13 +37,13 @@ data "aws_iam_policy_document" "permissions" {
   }
 }
 resource "aws_iam_role" "lambda_execution_role" {
-  assume_role_policy = "${data.aws_iam_policy_document.assume_role.json}"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
   name               = "${var.environment}-${var.app_name}-lambda-execution-role"
 }
 resource "aws_iam_role_policy" "lambda_execution_role" {
   name   = "${var.environment}-${var.app_name}-lambda-execution-role-policy"
-  policy = "${data.aws_iam_policy_document.permissions.json}"
-  role   = "${aws_iam_role.lambda_execution_role.id}"
+  policy = data.aws_iam_policy_document.permissions.json
+  role   = aws_iam_role.lambda_execution_role.id
 }
 #
 # Zip up the lambda source code and create the lambda function.
@@ -54,13 +54,13 @@ data "archive_file" "lambda" {
   type        = "zip"
 }
 resource "aws_lambda_function" "lambda" {
-  filename         = "${data.archive_file.lambda.output_path}"
+  filename         = data.archive_file.lambda.output_path
   function_name    = "${var.environment}-${var.app_name}-defaultDocumentMiss"
   handler          = "index.handler"
   publish          = true
-  role             = "${aws_iam_role.lambda_execution_role.arn}"
+  role             = aws_iam_role.lambda_execution_role.arn
   runtime          = "nodejs10.x"
-  source_code_hash = "${data.archive_file.lambda.output_base64sha256}"
+  source_code_hash = data.archive_file.lambda.output_base64sha256
 }
 
 
@@ -115,7 +115,7 @@ resource "aws_cloudfront_distribution" "cloudfront" {
 
     lambda_function_association {
       event_type   = "viewer-request"
-      lambda_arn   = "${aws_lambda_function.lambda.qualified_arn}"
+      lambda_arn   = aws_lambda_function.lambda.qualified_arn
       include_body = false
     }
   }
