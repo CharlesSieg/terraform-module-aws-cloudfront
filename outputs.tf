@@ -1,29 +1,14 @@
-variable "app_name" {
-  description = "application name"
-  type        = string
+output "distribution_id" {
+  description = "The unique identifier of the CloudFront distribution."
+  value       = aws_cloudfront_distribution.cloudfront.id
 }
 
-variable "aws_region" {
-  description = "The AWS region in which the infrastructure will be provisioned."
-  type        = string
+output "domain_name" {
+  description = "The domain name that points to the CloudFront distribution."
+  value       = aws_cloudfront_distribution.cloudfront.domain_name
 }
 
-variable "bucket_name" {
-  description = "Name of the S3 bucket which contains the dashboard source code"
-  type        = string
-}
-
-variable "cloudfront_ttl" {
-  description = "How many seconds an object remains in cache"
-  type        = number
-}
-
-variable "environment" {
-  description = "Environment name"
-  type        = string
-}
-
-variable "origin_access_identity" {
-  description = "The Origin Access Identity giving CloudFront permission to access the corresponding S3 bucket."
-  type        = string
+output "hosted_zone_id" {
+  description = "The hosted zone ID for the domain that points to the CloudFront distribution."
+  value       = aws_cloudfront_distribution.cloudfront.hosted_zone_id
 }
