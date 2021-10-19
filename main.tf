@@ -59,9 +59,9 @@ resource "aws_cloudfront_distribution" "cloudfront" {
   tags = {
     Application = "${var.environment}-${var.app_name}"
     Billing     = "${var.environment}-${var.app_name}"
-    Environment = "${var.environment}"
+    Environment = var.environment
     Name        = "${var.environment}-${var.app_name}-cloudfront"
-    Terraform   = "true"
+    Terraform   = true
   }
 
   viewer_certificate {
