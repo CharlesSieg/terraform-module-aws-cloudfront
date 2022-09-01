@@ -3,7 +3,7 @@
 #
 data "archive_file" "this" {
   output_path = "${path.module}/.files/cloudfront-document-miss-redirect.zip"
-  source_file = "${path.module}/source/index.js"
+  source_file = "${path.module}/source/defaultDocumentMiss/index.js"
   type        = "zip"
 }
 
