@@ -1,23 +1,13 @@
-#
-# Look up the SSL certificate in AWS Certificate Manager for the provided domain.
-#
-data "aws_acm_certificate" "cert" {
-  domain      = var.bucket_name
-  most_recent = true
-  types       = ["AMAZON_ISSUED"]
-}
-
-#
-# Creates a CloudFront distribution for a given S3 bucket.
-#
 resource "aws_cloudfront_distribution" "cloudfront" {
   aliases             = [var.bucket_name] # Alternate domain names, CNAMEs
+  comment             = "CloudFront distribution for ${var.name}."
   default_root_object = "index.html"
   enabled             = true    # Distribution State
   http_version        = "http2" # Supported HTTP Versions = HTTP/2, HTTP/1.1, HTTP/1.0
   is_ipv6_enabled     = true
   price_class         = "PriceClass_100" # Only USA and Europe; least expensive option
   retain_on_delete    = false            // if true, distribution is only disable on terraform destroy
+  tags                = merge(var.tags, { Name = "${var.name_prefix}-${var.name}" })
   wait_for_deployment = false
 
   # Logging disabled.
@@ -29,7 +19,7 @@ resource "aws_cloudfront_distribution" "cloudfront" {
     default_ttl            = var.cloudfront_ttl
     max_ttl                = var.cloudfront_ttl
     min_ttl                = 0
-    target_origin_id       = "${var.app_name}-${var.environment}"
+    target_origin_id       = "${var.name_prefix}-${var.name}"
     viewer_protocol_policy = "redirect-to-https"
 
     forwarded_values {
@@ -39,11 +29,17 @@ resource "aws_cloudfront_distribution" "cloudfront" {
         forward = "all"
       }
     }
+
+    lambda_function_association {
+      event_type   = "origin-request"
+      lambda_arn   = aws_lambda_function.this.qualified_arn
+      include_body = false
+    }
   }
 
   origin {
     domain_name = "${var.bucket_name}.s3.amazonaws.com"
-    origin_id   = "${var.app_name}-${var.environment}"
+    origin_id   = "${var.name_prefix}-${var.name}"
 
     s3_origin_config {
       origin_access_identity = var.origin_access_identity
@@ -54,14 +50,6 @@ resource "aws_cloudfront_distribution" "cloudfront" {
     geo_restriction {
       restriction_type = "none"
     }
-  }
-
-  tags = {
-    Application = "${var.environment}-${var.app_name}"
-    Billing     = "${var.environment}-${var.app_name}"
-    Environment = var.environment
-    Name        = "${var.environment}-${var.app_name}-cloudfront"
-    Terraform   = true
   }
 
   viewer_certificate {
