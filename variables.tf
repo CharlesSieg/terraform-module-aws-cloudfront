@@ -19,6 +19,11 @@ variable "cloudwatch_logs_retention_in_days" {
   type        = number
 }
 
+variable "lambda_arn" {
+  description = ""
+  type        = string
+}
+
 variable "name" {
   description = "application name"
   type        = string

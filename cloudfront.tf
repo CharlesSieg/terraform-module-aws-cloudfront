@@ -32,7 +32,7 @@ resource "aws_cloudfront_distribution" "cloudfront" {
 
     lambda_function_association {
       event_type   = "origin-request"
-      lambda_arn   = aws_lambda_function.this.qualified_arn
+      lambda_arn   = var.lambda_arn
       include_body = false
     }
   }
